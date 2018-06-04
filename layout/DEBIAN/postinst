@@ -1,0 +1,1 @@
+echo 'For your nonce to get set on every re-jaibreak, open the launch daemon located at /Library/LaunchDaemons/noncereboot11.plist and edit the 0xfeedfacecafebeef string to be your nonce'

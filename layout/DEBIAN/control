@@ -1,0 +1,9 @@
+Package: rocks.stek29.noncereboot11
+Name: noncereboot11
+Depends: firmware (>= 11.0), firmware (<< 11.2), cy+cpu.arm64
+Version: 1.0.3
+Architecture: iphoneos-arm
+Description: A proper command line nonce setter for iOS 11.
+Maintainer: Pwn20wnd <pwn20wndstuff@gmail.com>
+Author: Pwn20wnd, stek29 <imselfish@stek29.rocks>
+Section: Utilities
