@@ -17,3 +17,5 @@ uint64_t kalloc(uint64_t size);
 uint64_t kalloc_wired(uint64_t size);
 void kfree(uint64_t kaddr, uint64_t size);
 
+uint64_t find_kernel_base(void);
+uint64_t proc_for_pid(pid_t pid);

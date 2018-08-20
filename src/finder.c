@@ -1,34 +1,34 @@
 #include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 #include "kutils.h"
 #include "finder.h"
 #include "offsets.h"
 #include "debug.h"
 
-uint64_t task_self_addr(void) {
-    // can be done by:
-    // - finding kernel base
-    // - parsing kernel header
-    // - using patchfinder to find kernel_task
-    // - walking task list to find one with 
-    //   task->bsd_info.pid == getpid()
-
-    // or by using some other way to leak port
-    // and leaking mach_task_self
-
-    // I'd stick to second way because it's easier
-    // to use on iOS 11.1.2
-
-    uint64_t cached = 0;
-
-    if (cached == 0) {
-        uint64_t find_port_2(mach_port_t port, int disposition);
-        cached = find_port_2(mach_task_self(), MACH_MSG_TYPE_COPY_SEND);
-        DEBUG("task_self_addr: 0x%llx", cached);
+uint64_t task_self_addr() {
+    
+    uint64_t selfproc = proc_for_pid(getpid());
+    if (selfproc == 0) {
+        fprintf(stderr, "failed to find our task addr\n");
+        exit(-1);
     }
-
-    return cached;
+    uint64_t addr = rk64(selfproc + OFF_TASK);
+    
+    uint64_t task_addr = addr;
+    uint64_t itk_space = rk64(task_addr + OFF_TASK__ITK_SPACE);
+    
+    uint64_t is_table = rk64(itk_space + OFF_IPC_SPACE__IS_TABLE);
+    
+    uint32_t port_index = mach_task_self() >> 8;
+    const int sizeof_ipc_entry_t = 0x18;
+    
+    uint64_t port_addr = rk64(is_table + (port_index * sizeof_ipc_entry_t));
+    
+    return port_addr;
 }
+
 
 // from Ian Beer's find_port.c
 uint64_t find_port_address(mach_port_name_t port) {

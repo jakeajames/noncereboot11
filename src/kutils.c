@@ -2,6 +2,8 @@
 
 #include "kutils.h"
 #include "debug.h"
+#include "patchfinder64.h"
+#include "offsets.h"
 
 mach_port_t tfpzero;
 
@@ -169,3 +171,34 @@ void kfree(uint64_t kaddr, uint64_t size) {
   }
 }
 
+// Original idea & implementation by Jonathan Seals' kernelversionhacker
+uint64_t find_kernel_base() {
+    #define slid_base  base+slide
+    uint64_t base = 0xFFFFFFF007004000;
+    uint32_t slide = 0x21000000;
+    uint32_t data = rk32(slid_base);
+ 
+    for (;;) {
+        while (data != 0xFEEDFACF) {
+            slide -= 0x200000;
+            data = rk32(slid_base);
+         }
+ 
+        char buf[0x120];
+        for (uint64_t addr = slid_base; addr < slid_base + 0x2000; addr += 8) {
+            rkbuffer(addr, buf, 0x120); // read 0x120 bytes into a char buffer
+            if (!strcmp(buf, "__text") && !strcmp(buf + 16, "__PRELINK_TEXT")) return slid_base;
+            data = 0;
+        }
+    }
+}
+
+uint64_t proc_for_pid(pid_t pid) {
+    uint64_t proc = rk64(find_allproc()), pd;
+    while (proc) {
+        pd = rk32(proc + OFF_P_PID);
+        if (pd == pid) return proc;
+        proc = rk64(proc);
+    }
+    return 0;
+}

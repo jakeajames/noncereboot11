@@ -6,6 +6,7 @@
 #include "nonce.h"
 #include "kutils.h"
 #include "debug.h"
+#include "patchfinder64.h"
 
 void printusage(void) {
     printf("-h this message\n");
@@ -104,6 +105,17 @@ int main(int argc, char *argv[]) {
 
     if (init_tfpzero()) {
         ERROR("failed to init tfpzero");
+        return EXIT_FAILURE;
+    }
+
+    uint64_t kernel_base = find_kernel_base();
+    if (!kernel_base) {
+        ERROR("failed to get kernel base");
+        return EXIT_FAILURE;
+    }
+
+    if(init_kernel(kernel_base, NULL)) {
+        ERROR("failed to init patchfinder");
         return EXIT_FAILURE;
     }
 
